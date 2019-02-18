@@ -1,0 +1,73 @@
+version: '3.1'
+services:
+  mysql:
+    image: mysql:8
+    container_name: mysql
+    networks:
+      - backend
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_DATABASE=test
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/mysql_root_password
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD_FILE=/run/secrets/mysql_password
+    secrets:
+      - mysql_root_password
+      - mysql_password
+    # this command is required in order to login with user/password
+    command: --default-authentication-plugin=mysql_native_password
+  php:
+    image: dharamaraob/php:7.2-apachemysqli
+    container_name: php
+    build: ./php
+    volumes:
+      - ./src:/var/www/html
+    networks:
+      - backend
+    secrets:
+      - secret-phrase
+      - secret-in-a-file
+      - mysql_password
+    environment:
+      - "MY_ENV_VAR=Lorem ipsum dolor sit amet"
+      - SECRET_FILE_PATH=/run/secrets/secret-in-a-file
+      - MY_DB_PASSWORD_FILE=/run/secrets/mysql_password
+      - MY_DB_USER=user
+      - MY_DB_HOST=mysql
+      - MY_DB_DATABASE=test
+secrets:
+  mysql_password:
+    file: ./mysql_password.txt
+  mysql_root_password:
+    file: ./mysql_root_password.txt
+  secret-phrase:
+    external: true # This should be created before you launch stack. echo "A secret phrase" | docker secret create secret-phrase -
+  secret-in-a-file:
+    external: true # echo "A secret content" | docker secret create secret-in-a-file -
+
+networks:
+  backend:
+    driver: "overlay"
+
+
+# Bringing up the same file using docker stack
+# You'll need your machine to be in a swarm in order to create secrets and to deploy the application stack:
+
+# $ docker swarm init
+# The external secrets must be created before you deploy the docker-compose.yml file:
+
+# $ echo "A secret phrase" | docker secret create secret-phrase -
+# $ echo "A secret content" | docker secret create secret-in-a-file -
+
+# --- Mazor Diff: network changed from bridge to overlay   ----#
+
+
+# docker secret ls
+# docker stack deploy -c stackphp.yml phpmysql
+
+# Credits to: https://github.com/javalisson/docker-secrets
+# docker network ls
+# docker stack ls
+# docker stack services phpmysql
+# $ docker exec -it 7534fc2cd823 php 1_read-file-contents.php  -> Hello, File Content!

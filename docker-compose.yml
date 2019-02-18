@@ -1,0 +1,45 @@
+version: '3.1'
+services:
+  neo4j:
+    container_name: neo4j
+    image: sensitydockerrepo/neo4j:3.2.8-enterprise
+    networks:
+      - backend
+    environment:
+      - NEO4J_AUTH=neo4j/neo4j1
+      - NEO4J_dbms_memory_heap_maxSize=1024m
+      - NEO4J_dbms_allow__format__migration=true
+    ports:
+       - "7474:7474"
+       - "7473:7473"
+       - "7687:7687"
+    restart:
+      on-failure
+  kafka:
+    container_name: kafka_service
+    image: sensitydockerrepo/kafka:0.10.1.0
+    environment:
+      - KAFKA_CREATE_TOPICS=connectionstatus:1:1,config:1:1,sensor:1:1,corenode.sensor:1:1,api.reply.interface:1:1,ms.request.alert:1:1,ms.request.sse:1:1,ms.request.config:1:1,ms.request.sensor:1:1,ms.request.acl:1:1,node.command:1:1,corenode.command:1:1,login:1:1,alarm:1:1,corenode.alarm:1:1,alert:1:1,config.reply:1:1,dd.capeworker.in:1:1,dd.capeworker.out:1:1,parking.policy.req:1:1,parking.tag.req:1:1,parking.policygroup.req:1:1,parking.appuserdata.req:1:1,ambient_light:1:1,driver_level:1:1,presence:1:1,trigger_lux:1:1,main_power:1:1,media:1:1,ms.request.media:1:1,ms.ota.api.req:1:1,ms.ota.job:1:1,ota:1:1,businessalert.job.req:1:1,ms.business.alert.request:1:1,businessalert:1:1,ms.request.schedule:1:1,ms.command.schedule:1:1,ms.trigger.schedule:1:1,schedule.command:1:1,light.command:1:1,node.systeminfo:1:1,ms.trigger.request:1:1,ms.businessrequest.sse:1:1,va.node.evt:1:1,va.node.evt.replay:1:1,va.node.cfg:1:1,va.node.cfg.replay:1:1,traffic.evt.linec:1:1,traffic.evt.linec.replay:1:1,traffic.evt.objent:1:1,traffic.evt.objent.replay:1:1,traffic.evt.objlev:1:1,traffic.evt.objlev.replay:1:1,traffic.evt.objdwl:1:1,traffic.evt.objdwl.replay:1:1,traffic.evt.proxi:1:1,traffic.evt.proxi.replay:1:1,traffic.evt.seq:1:1,traffic.evt.seq.replay:1:1,ms.request.gps:1:1,corenode.gps:1:1,gps:1:1,node.gps:1:1,lconode.gps:1:1,autocommission.login:1:1,api.reply.gps:1:1,lconode.login:1:1,lconode.alarm:1:1,lconode.command:1:1ms.request.parkinghistory:1:1,ms.request.parkingcurrent:1:1,ms.request.parkinggroup:1:1,ms.request.getparkingzones:1:1,ms.parking.whatif.request:1:1,parking.whatif.jobstatus:1:1,park.evt.dpark:1:1,park.evt.dparkReplay:1:1,park.cfg.dpark:1:1,park.cfg.dparkReplay:1:1,park.evt.ndpark:1:1,park.evt.ndparkReplay:1:1,park.cfg.ndpark:1:1,park.cfg.ndparkReplay:1:1,park.cfg.trigger.evt:1:1,park.evt.sql.retry:1:1,park.cfg.sql.retry:1:1,corenode.login:1:1,corenode.connectionstatus:1:1,network:1:1,wifi:1:1,cell:1:1,ms.request.device:1:1,ms.request.traffichistorical:1:1,lconode.callback.stream:1:1,ms.request.lco:1:1,lconode.login:1:1,lconode.disconnect:1:1,lconode.sensor:1:1,lconode.gps:1:1,lconode.alarm:1:1
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper_service:2181
+    ports:
+      - "9092:9092"
+    restart:
+      unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - zookeeper
+    networks:
+      - backend
+  zookeeper:
+    container_name: zookeeper_service
+    image: sensitydockerrepo/zookeeper:3.4.9
+    networks:
+      - backend
+    ports:
+      - "2181:2181"
+
+networks:
+  backend:
+    driver: "bridge"
+

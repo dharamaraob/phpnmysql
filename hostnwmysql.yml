@@ -1,0 +1,60 @@
+version: '3.1'
+services:
+  mysql:
+    image: mysql:8
+    container_name: mysql
+    network_mode: "host"
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_DATABASE=test
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/mysql_root_password
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD_FILE=/run/secrets/mysql_password
+    secrets:
+      - mysql_root_password
+      - mysql_password
+    # this command is required in order to login with user/password
+    command: --default-authentication-plugin=mysql_native_password
+  php:
+    image: dharamaraob/php:7.2-apachemysqli
+    container_name: php
+    build: ./php
+    volumes:
+      - ./src:/var/www/html
+    network_mode: "host"
+    secrets:
+      - secret-phrase
+      - secret-in-a-file
+      - mysql_password
+    environment:
+      - "MY_ENV_VAR=Lorem ipsum dolor sit amet"
+      - SECRET_FILE_PATH=/run/secrets/secret-in-a-file
+      - MY_DB_PASSWORD_FILE=/run/secrets/mysql_password
+      - MY_DB_USER=user
+      - MY_DB_HOST=mysql
+      - MY_DB_DATABASE=test
+secrets:
+  mysql_password:
+    file: ./mysql_password.txt
+  mysql_root_password:
+    file: ./mysql_root_password.txt
+  secret-phrase:
+    external: true # This should be created before you launch stack. echo "A secret phrase" | docker secret create secret-phrase -
+  secret-in-a-file:
+    external: true # echo "A secret content" | docker secret create secret-in-a-file -
+
+#networks:
+#  backend:
+#    driver: "host"
+
+#To bring the template up with the network name farallones_default. If we don't specify it, it will take the top directory name.
+#: sudo docker-compose -f test.yml -p farallones up -d
+# sudo docker-compose -f test.yml -p farallones down
+# To  bring another container under this network named farallones_default, i have launched a dynamo container with name:xenodochial_chebyshev
+# docker network connect farallones_default xenodochial_chebyshev (or) docker run --net=farallones_default  ....
+# Now I can see this container as well in my network
+# docker network inspect farallones_default. I should be  able to see all my containers inclding dynamo.
+# To view the Ip address of a container: docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' container_name_or_id
+
+# https://medium.com/@caysever/docker-compose-network-b86e424fad82
